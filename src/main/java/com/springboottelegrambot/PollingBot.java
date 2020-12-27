@@ -81,14 +81,13 @@ public class PollingBot extends TelegramLongPollingBot
 		}
 
 		@Override
-		public void onRegister()
-		{
-		}
-
-		@Override
 		public String getBotToken()
 		{
-				return "BotToken";
+				String telegramBotApiToken = botConfig.getTelegramBotApiToken();
+				if (telegramBotApiToken.equals("")) {
+						log.info("Can't find telegram bot api token. See the properties.properties file");
+				}
+				return telegramBotApiToken;
 		}
 
 		@Override

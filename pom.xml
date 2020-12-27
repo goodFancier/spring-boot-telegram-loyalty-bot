@@ -8,10 +8,10 @@
         <version>2.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.srping-boot-telegram-bot</groupId>
-    <artifactId>srping-boot-telegram-bot</artifactId>
+    <groupId>com.spring-boot-telegram-bot</groupId>
+    <artifactId>spring-boot-telegram-bot</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>srping-boot-telegram-bot</name>
+    <name>spring-boot-telegram-bot</name>
     <description>Spring Boot telegram bot</description>
 
     <properties>
