@@ -8,13 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CommandRepository extends JpaRepository<User, Integer>
+public interface CommandRepository extends JpaRepository<Command, Integer>
 {
-		Command findByCommandNameInOrDescription(String textMessage);
+		Command findByCommandNameOrDescription(String commandName, String description);
 
-		Integer getAccessLevelForCommand(String className);
-
-		List<Command> getAvailableCommandsForLevel(Integer accessLevel);
-
-		Command findCommandByName(String name);
+		Command findCommandByCommandName(String name);
 }

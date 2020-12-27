@@ -1,5 +1,6 @@
 package com.springboottelegrambot;
 
+import com.springboottelegrambot.config.BotConfig;
 import com.springboottelegrambot.model.dto.Chat;
 import com.springboottelegrambot.model.dto.Command;
 import com.springboottelegrambot.model.dto.CommandParent;
@@ -9,15 +10,18 @@ import com.springboottelegrambot.repository.ChatRepository;
 import com.springboottelegrambot.repository.CommandRepository;
 import com.springboottelegrambot.repository.CommandWaitingRepository;
 import com.springboottelegrambot.repository.UserRepository;
+import com.springboottelegrambot.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.GetMe;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.Optional;
 
@@ -25,6 +29,10 @@ import java.util.Optional;
 public class PollingBot extends TelegramLongPollingBot
 {
 		private final UserRepository userRepository;
+
+		private final UserService userService;
+
+		private final BotConfig botConfig;
 
 		private final CommandRepository commandRepository;
 
@@ -38,22 +46,38 @@ public class PollingBot extends TelegramLongPollingBot
 
 		public PollingBot(
 			UserRepository userRepository,
+			UserService userService,
 			CommandRepository commandRepository,
 			CommandWaitingRepository commandWaitingRepository,
 			ChatRepository chatRepository,
-			ApplicationContext context)
+			ApplicationContext context,
+			BotConfig botConfig)
 		{
 				this.userRepository = userRepository;
 				this.commandRepository = commandRepository;
 				this.commandWaitingRepository = commandWaitingRepository;
 				this.chatRepository = chatRepository;
 				this.context = context;
+				this.userService = userService;
+				this.botConfig = botConfig;
 		}
 
 		@Override
 		public String getBotUsername()
 		{
-				return null;
+				String botUserName = botConfig.getTelegramBotUsername();
+				if (botUserName == null) {
+						User botUser;
+						try {
+								botUser = this.execute(new GetMe());
+								botUserName = botUser.getUserName();
+								botConfig.setTelegramBotUsername(botUserName);
+						} catch (TelegramApiException e) {
+								botUserName = "testBot";
+						}
+				}
+
+				return botUserName;
 		}
 
 		@Override
@@ -64,7 +88,7 @@ public class PollingBot extends TelegramLongPollingBot
 		@Override
 		public String getBotToken()
 		{
-				return null;
+				return "BotToken";
 		}
 
 		@Override
@@ -73,7 +97,6 @@ public class PollingBot extends TelegramLongPollingBot
 				Message message;
 				User user;
 				String textOfMessage;
-				boolean editedMessage = false;
 				if(update.hasCallbackQuery())
 				{
 						CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -91,7 +114,6 @@ public class PollingBot extends TelegramLongPollingBot
 								if(update.hasEditedMessage())
 								{
 										message = update.getEditedMessage();
-										editedMessage = true;
 								}
 								else
 								{
@@ -101,26 +123,29 @@ public class PollingBot extends TelegramLongPollingBot
 						user = message.getFrom();
 				}
 				Long chatId = message.getChatId();
-				com.springboottelegrambot.model.dto.User currentUser = userRepository.findById(chatId).get();
+				Optional<com.springboottelegrambot.model.dto.User> currentUserOptional = userRepository.findByRecID(chatId);
+				if(currentUserOptional.isEmpty())
+						return;
+				com.springboottelegrambot.model.dto.User currentUser = currentUserOptional.get();
 				log.info("From " + chatId + " (" + user.getUserName() + "-" + currentUser.getRecID() + "): " + textOfMessage);
-				AccessLevels userAccessLevel = userRepository.getAccessLevelByUser(currentUser);
+				AccessLevels userAccessLevel = userRepository.getAccessLevelByRecID(currentUser.getRecID());
 				if(userAccessLevel.equals(AccessLevels.BANNED))
 				{
 						log.info("Banned user. Ignoring...");
 						return;
 				}
-				Command command = commandRepository.findByCommandNameInOrDescription(textOfMessage);
+				Command command = commandRepository.findByCommandNameOrDescription(textOfMessage, textOfMessage);
 				if(command == null)
 				{
-						Optional<Chat> chat = chatRepository.findById(chatId);
+						Optional<Chat> chat = chatRepository.findByRecID(chatId);
 						if(chat.isPresent())
 						{
 								Optional<CommandWaiting> commandWaiting = commandWaitingRepository.findByChatAndUser(chat.get(), currentUser);
-								if(!commandWaiting.isPresent())
+								if(commandWaiting.isEmpty())
 								{
 										return;
 								}
-								command = commandRepository.findCommandByName(commandWaiting.get().getCommand().getCommandName());
+								command = commandRepository.findCommandByCommandName(commandWaiting.get().getCommand().getCommandName());
 								if(command == null)
 								{
 										return;
@@ -137,10 +162,10 @@ public class PollingBot extends TelegramLongPollingBot
 				{
 						log.error(e.getMessage());
 				}
-				if(userRepository.isUserHaveAccessForCommand(userAccessLevel, command.getAccessLevel()))
+				if(userService.isUserHaveAccessForCommand(userAccessLevel, command.getAccessLevel()))
 				{
-						Parser parser = new Parser(this, command, update);
-						parser.start();
+						CommandHandler commandHandler = new CommandHandler(this, commandParent, update);
+						commandHandler.handle();
 				}
 		}
 }

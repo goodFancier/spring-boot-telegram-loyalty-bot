@@ -9,19 +9,17 @@ public class CommandWaiting
 		@GeneratedValue(strategy = GenerationType.AUTO)
 		private Long recID;
 
-		@Column(name = "chatid", nullable = false)
-		private Long chatId;
+		@OneToOne(fetch = FetchType.EAGER)
+		private Chat chat;
 
-		@Column(name = "userid", nullable = false)
-		private Integer userId;
+		@OneToOne(fetch = FetchType.EAGER)
+		private User user;
 
 		@OneToOne(fetch = FetchType.EAGER)
 		private Command command;
 
-		@Column(name = "textmessage")
 		private String textMessage;
 
-		@Column(name = "isfinished")
 		private Boolean isFinished;
 
 		public Long getRecID()
@@ -34,24 +32,24 @@ public class CommandWaiting
 				this.recID = recID;
 		}
 
-		public Long getChatId()
+		public Chat getChat()
 		{
-				return chatId;
+				return chat;
 		}
 
-		public void setChatId(Long chatId)
+		public void setChat(Chat chat)
 		{
-				this.chatId = chatId;
+				this.chat = chat;
 		}
 
-		public Integer getUserId()
+		public User getUser()
 		{
-				return userId;
+				return user;
 		}
 
-		public void setUserId(Integer userId)
+		public void setUser(User user)
 		{
-				this.userId = userId;
+				this.user = user;
 		}
 
 		public Command getCommand()

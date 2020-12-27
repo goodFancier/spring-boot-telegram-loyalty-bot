@@ -10,9 +10,7 @@ import java.util.Optional;
 @Service
 public interface UserRepository extends JpaRepository<User, Integer>
 {
-		AccessLevels getAccessLevelByUser(User user);
+		AccessLevels getAccessLevelByRecID(Long id);
 
-		Optional<User> findById(Long id);
-
-		Boolean isUserHaveAccessForCommand(AccessLevels userAccessLevel, AccessLevels commandAccessLevel);
+		Optional<User> findByRecID(Long id);
 }
