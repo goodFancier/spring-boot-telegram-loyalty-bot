@@ -10,7 +10,5 @@ import java.util.Optional;
 @Service
 public interface UserRepository extends JpaRepository<User, Integer>
 {
-		AccessLevels getAccessLevelByRecID(Long id);
-
 		Optional<User> findByRecID(Long id);
 }
