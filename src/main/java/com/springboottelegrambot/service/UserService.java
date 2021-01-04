@@ -1,13 +1,15 @@
 package com.springboottelegrambot.service;
 
+import com.springboottelegrambot.model.dto.User;
 import com.springboottelegrambot.model.enums.AccessLevels;
-import org.springframework.stereotype.Service;
 
-@Service
-public class UserService
+public interface UserService
 {
-		public Boolean isUserHaveAccessForCommand(AccessLevels userAccessLevel, AccessLevels commandAccessLevel)
-		{
-				return userAccessLevel.getValue() >= commandAccessLevel.getValue();
-		}
+		Boolean isUserHaveAccessForCommand(AccessLevels userAccessLevel, AccessLevels commandAccessLevel);
+
+		User loadUser(Long userId);
+
+		User save(User user);
+
+		User updateUserInfo(User userFrom);
 }
