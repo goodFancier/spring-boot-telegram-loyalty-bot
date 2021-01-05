@@ -1,6 +1,7 @@
 package com.springboottelegrambot;
 
 import com.springboottelegrambot.config.BotConfig;
+import com.springboottelegrambot.model.commands.login.InitLoginScreen;
 import com.springboottelegrambot.model.dto.Chat;
 import com.springboottelegrambot.model.dto.Command;
 import com.springboottelegrambot.model.dto.CommandParent;
@@ -8,7 +9,6 @@ import com.springboottelegrambot.model.dto.CommandWaiting;
 import com.springboottelegrambot.model.enums.AccessLevels;
 import com.springboottelegrambot.repository.ChatRepository;
 import com.springboottelegrambot.repository.CommandWaitingRepository;
-import com.springboottelegrambot.repository.UserRepository;
 import com.springboottelegrambot.service.CommandService;
 import com.springboottelegrambot.service.UserService;
 import org.slf4j.Logger;
@@ -28,8 +28,6 @@ import java.util.Optional;
 @Component
 public class PollingBot extends TelegramLongPollingBot
 {
-		private final UserRepository userRepository;
-
 		private final UserService userService;
 
 		private final BotConfig botConfig;
@@ -45,7 +43,6 @@ public class PollingBot extends TelegramLongPollingBot
 		private final Logger log = LoggerFactory.getLogger(PollingBot.class);
 
 		public PollingBot(
-			UserRepository userRepository,
 			UserService userService,
 			CommandWaitingRepository commandWaitingRepository,
 			ChatRepository chatRepository,
@@ -53,7 +50,6 @@ public class PollingBot extends TelegramLongPollingBot
 			BotConfig botConfig,
 			CommandService commandService)
 		{
-				this.userRepository = userRepository;
 				this.commandWaitingRepository = commandWaitingRepository;
 				this.chatRepository = chatRepository;
 				this.context = context;
@@ -66,17 +62,20 @@ public class PollingBot extends TelegramLongPollingBot
 		public String getBotUsername()
 		{
 				String botUserName = botConfig.getTelegramBotUsername();
-				if (botUserName == null) {
+				if(botUserName == null)
+				{
 						User botUser;
-						try {
+						try
+						{
 								botUser = this.execute(new GetMe());
 								botUserName = botUser.getUserName();
 								botConfig.setTelegramBotUsername(botUserName);
-						} catch (TelegramApiException e) {
+						}
+						catch(TelegramApiException e)
+						{
 								botUserName = "testBot";
 						}
 				}
-
 				return botUserName;
 		}
 
@@ -84,7 +83,8 @@ public class PollingBot extends TelegramLongPollingBot
 		public String getBotToken()
 		{
 				String telegramBotApiToken = botConfig.getTelegramBotApiToken();
-				if (telegramBotApiToken.equals("")) {
+				if(telegramBotApiToken.equals(""))
+				{
 						log.info("Can't find telegram bot api token. See the properties.properties file");
 				}
 				return telegramBotApiToken;
@@ -125,14 +125,14 @@ public class PollingBot extends TelegramLongPollingBot
 				Long userId = Long.valueOf(telegramUser.getId());
 				log.info("From " + chatId + " (" + telegramUser.getUserName() + "-" + userId + "): " + textOfMessage);
 				com.springboottelegrambot.model.dto.User user = userService.loadUser(userId);
-				userService.updateUserInfo(user);
+				user = userService.updateUserInfo(user, telegramUser);
 				if(user.getAccessLevel().equals(AccessLevels.BANNED))
 				{
 						log.info("Banned user. Ignoring...");
 						return;
 				}
-
-				if (textOfMessage == null || textOfMessage.equals("")) {
+				if(textOfMessage == null || textOfMessage.equals(""))
+				{
 						return;
 				}
 				Command command = commandService.findCommandInText(textOfMessage, this.getBotUsername());
@@ -152,21 +152,28 @@ public class PollingBot extends TelegramLongPollingBot
 										return;
 								}
 						}
-						return;
+						else
+						{
+								CommandHandler commandHandler = new CommandHandler(this, new InitLoginScreen(), update);
+								commandHandler.handle();
+						}
 				}
-				CommandParent<?> commandParent = null;
-				try
+				else
 				{
-						commandParent = (CommandParent<?>)context.getBean(command.getClassName());
-				}
-				catch(Exception e)
-				{
-						log.error(e.getMessage());
-				}
-				if(userService.isUserHaveAccessForCommand(user.getAccessLevel(), command.getAccessLevel()))
-				{
-						CommandHandler commandHandler = new CommandHandler(this, commandParent, update);
-						commandHandler.handle();
+						CommandParent<?> commandParent = null;
+						try
+						{
+								commandParent = (CommandParent<?>)context.getBean(command.getClassName());
+						}
+						catch(Exception e)
+						{
+								log.error(e.getMessage());
+						}
+						if(userService.isUserHaveAccessForCommand(user.getAccessLevel(), command.getAccessLevel()))
+						{
+								CommandHandler commandHandler = new CommandHandler(this, commandParent, update);
+								commandHandler.handle();
+						}
 				}
 		}
 }

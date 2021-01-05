@@ -11,5 +11,5 @@ public interface UserService
 
 		User save(User user);
 
-		User updateUserInfo(User userFrom);
+		User updateUserInfo(User user, org.telegram.telegrambots.meta.api.objects.User telegramUser);
 }
