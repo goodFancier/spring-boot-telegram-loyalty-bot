@@ -11,19 +11,27 @@ import com.springboottelegrambot.repository.ChatRepository;
 import com.springboottelegrambot.repository.CommandWaitingRepository;
 import com.springboottelegrambot.service.CommandService;
 import com.springboottelegrambot.service.UserService;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetMe;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.Optional;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class PollingBot extends TelegramLongPollingBot
@@ -123,6 +131,7 @@ public class PollingBot extends TelegramLongPollingBot
 				}
 				Long chatId = message.getChatId();
 				Long userId = Long.valueOf(telegramUser.getId());
+
 				log.info("From " + chatId + " (" + telegramUser.getUserName() + "-" + userId + "): " + textOfMessage);
 				com.springboottelegrambot.model.dto.User user = userService.loadUser(userId);
 				user = userService.updateUserInfo(user, telegramUser);
@@ -139,6 +148,7 @@ public class PollingBot extends TelegramLongPollingBot
 				if(command == null)
 				{
 						Optional<Chat> chat = chatRepository.findByRecID(chatId);
+						CommandHandler commandHandler;
 						if(chat.isPresent())
 						{
 								Optional<CommandWaiting> commandWaiting = commandWaitingRepository.findByChatAndUser(chat.get(), user);
@@ -147,32 +157,30 @@ public class PollingBot extends TelegramLongPollingBot
 										return;
 								}
 								command = commandService.findCommandByName(commandWaiting.get().getCommand().getCommandName());
-								if(command == null)
-								{
-										return;
-								}
+								commandHandler = new CommandHandler(this, command == null? new InitLoginScreen(): (CommandParent<?>)context.getBean(command.getClassName()), update);
 						}
 						else
-						{
-								CommandHandler commandHandler = new CommandHandler(this, new InitLoginScreen(), update);
-								commandHandler.handle();
-						}
+								commandHandler = new CommandHandler(this, new InitLoginScreen(), update);
+						commandHandler.handle();
 				}
 				else
 				{
-						CommandParent<?> commandParent = null;
-						try
-						{
-								commandParent = (CommandParent<?>)context.getBean(command.getClassName());
-						}
-						catch(Exception e)
-						{
-								log.error(e.getMessage());
-						}
+						Reflections reflections = new Reflections("com.springboottelegrambot.model.commands", CommandParent.class, new SubTypesScanner(false));
+						Set<Class<? extends CommandParent>> commands = reflections.getSubTypesOf(CommandParent.class);
+						Class<? extends CommandParent> foundCommand = commands.stream().filter(o -> o.getSimpleName().equals(textOfMessage)).collect(Collectors.toList()).get(0);
 						if(userService.isUserHaveAccessForCommand(user.getAccessLevel(), command.getAccessLevel()))
 						{
-								CommandHandler commandHandler = new CommandHandler(this, commandParent, update);
-								commandHandler.handle();
+								CommandHandler commandHandler = null;
+								try
+								{
+										commandHandler = new CommandHandler(this, foundCommand.getDeclaredConstructor().newInstance(), update);
+								}
+								catch(InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
+								{
+										e.printStackTrace();
+								}
+								if(commandHandler != null)
+										commandHandler.handle();
 						}
 				}
 		}

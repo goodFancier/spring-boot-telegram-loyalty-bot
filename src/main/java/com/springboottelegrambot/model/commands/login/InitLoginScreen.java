@@ -56,7 +56,7 @@ public class InitLoginScreen implements CommandParent<PartialBotApiMethod<?>>
 		{
 				InlineKeyboardButton loginByPhoneBtn = new InlineKeyboardButton();
 				loginByPhoneBtn.setText("Войти по номеру телефона");
-				loginByPhoneBtn.setCallbackData("Войти по номеру телефона");
+				loginByPhoneBtn.setCallbackData("RequestSmsCode");
 				List<InlineKeyboardButton> loginRow = new ArrayList<>();
 				loginRow.add(loginByPhoneBtn);
 				List<List<InlineKeyboardButton>> rows = new ArrayList<>();
