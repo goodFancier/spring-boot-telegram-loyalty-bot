@@ -13,7 +13,5 @@ public interface CommandRepository extends JpaRepository<Command, Integer>
 {
 		Command findByCommandNameOrDescription(String commandName, String description);
 
-		Command findCommandByCommandName(String name);
-
 		Command findByCommandName(@Param("commandName") String commandName);
 }

@@ -21,7 +21,7 @@ public class CommandHandler
 
 		private final PollingBot bot;
 
-		private final CommandParent<?> command;
+		private CommandParent<?> command;
 
 		private final Update update;
 
@@ -32,98 +32,132 @@ public class CommandHandler
 				this.update = update;
 		}
 
-		public void handle() {
-				if (command == null) {
-						return;
-				}
-				log.debug("Find a command {}", command.toString());
+		public void handle()
+		{
+				log.debug("Found a command {}", command.toString());
 				Message message = update.getMessage();
-				if (message == null) {
+				if(message == null)
+				{
 						message = update.getEditedMessage();
-						if (message == null) {
+						if(message == null)
+						{
 								message = update.getCallbackQuery().getMessage();
 						}
 				}
-
 				SendChatAction sendChatAction = new SendChatAction();
 				sendChatAction.setChatId(message.getChatId().toString());
 				sendChatAction.setAction(ActionType.TYPING);
-				try {
+				try
+				{
 						bot.execute(sendChatAction);
-				} catch (TelegramApiException e) {
+				}
+				catch(TelegramApiException e)
+				{
 						log.error("Error: cannot send chat action: {}", e.getMessage());
 				}
-
-				try {
+				try
+				{
 						PartialBotApiMethod<?> method = command.parse(update);
-						if (method instanceof SendMessage) {
-								SendMessage sendMessage = (SendMessage) method;
+						if(method instanceof SendMessage)
+						{
+								SendMessage sendMessage = (SendMessage)method;
 								log.info("To " + message.getChatId() + ": " + sendMessage.getText());
 								bot.execute(sendMessage);
-						} else if (method instanceof SendPhoto) {
-								SendPhoto sendPhoto = (SendPhoto) method;
-								log.info("To " + message.getChatId() + ": sending photo " + sendPhoto.getCaption());
-								bot.execute(sendPhoto);
-						} else if (method instanceof SendMediaGroup) {
-								SendMediaGroup sendMediaGroup = (SendMediaGroup) method;
-								log.info("To " + message.getChatId() + ": sending photos " + sendMediaGroup);
-								try {
-										bot.execute(sendMediaGroup);
-								} catch (TelegramApiException e) {
-										splitSendMediaGroup(sendMediaGroup);
-								}
-						} else if (method instanceof EditMessageText) {
-								EditMessageText editMessageText = (EditMessageText) method;
-								log.info("To " + message.getChatId() + ": edited message " + editMessageText.getText());
-								bot.execute(editMessageText);
-						} else if (method instanceof SendDocument) {
-								SendDocument sendDocument = (SendDocument) method;
-								log.info("To " + message.getChatId() + ": sending document " + sendDocument.getCaption());
-								bot.execute(sendDocument);
 						}
-				} catch (TelegramApiException e) {
+						else
+								if(method instanceof SendPhoto)
+								{
+										SendPhoto sendPhoto = (SendPhoto)method;
+										log.info("To " + message.getChatId() + ": sending photo " + sendPhoto.getCaption());
+										bot.execute(sendPhoto);
+								}
+								else
+										if(method instanceof SendMediaGroup)
+										{
+												SendMediaGroup sendMediaGroup = (SendMediaGroup)method;
+												log.info("To " + message.getChatId() + ": sending photos " + sendMediaGroup);
+												try
+												{
+														bot.execute(sendMediaGroup);
+												}
+												catch(TelegramApiException e)
+												{
+														splitSendMediaGroup(sendMediaGroup);
+												}
+										}
+										else
+												if(method instanceof EditMessageText)
+												{
+														EditMessageText editMessageText = (EditMessageText)method;
+														log.info("To " + message.getChatId() + ": edited message " + editMessageText.getText());
+														bot.execute(editMessageText);
+												}
+												else
+														if(method instanceof SendDocument)
+														{
+																SendDocument sendDocument = (SendDocument)method;
+																log.info("To " + message.getChatId() + ": sending document " + sendDocument.getCaption());
+																bot.execute(sendDocument);
+														}
+				}
+				catch(TelegramApiException e)
+				{
 						log.error("Error: cannot send response: {}", e.getMessage());
-				} catch (BotException botException) {
-						try {
+				}
+				catch(BotException botException)
+				{
+						try
+						{
 								SendMessage sendMessage = new SendMessage();
 								sendMessage.setReplyToMessageId(message.getMessageId());
 								sendMessage.setChatId(message.getChatId().toString());
 								sendMessage.setText(botException.getMessage());
-
 								bot.execute(sendMessage);
-						} catch (TelegramApiException e) {
+						}
+						catch(TelegramApiException e)
+						{
 								log.error("Error: cannot send response: {}", e.getMessage());
 						}
-				} catch (Exception e) {
+				}
+				catch(Exception e)
+				{
 						e.printStackTrace();
 				}
 		}
 
-		private void splitSendMediaGroup(SendMediaGroup sendMediaGroup) {
+		private void splitSendMediaGroup(SendMediaGroup sendMediaGroup)
+		{
 				sendMediaGroup.getMedias()
 					.forEach(inputMedia -> {
 							InputFile inputFile = new InputFile();
 							inputFile.setMedia(inputMedia.getMedia());
-
 							SendPhoto sendPhoto = new SendPhoto();
 							sendPhoto.setPhoto(inputFile);
 							sendPhoto.setReplyToMessageId(sendMediaGroup.getReplyToMessageId());
 							sendPhoto.setChatId(sendMediaGroup.getChatId());
-
-							try {
+							try
+							{
 									bot.execute(sendPhoto);
-							} catch (TelegramApiException telegramApiException) {
-									try {
+							}
+							catch(TelegramApiException telegramApiException)
+							{
+									try
+									{
 											sendPhoto.setPhoto(new InputFile(getFileFromUrl(inputMedia.getMedia(), 5000000), "image"));
 											bot.execute(sendPhoto);
-									} catch (Exception exception) {
+									}
+									catch(Exception exception)
+									{
 											SendMessage sendMessage = new SendMessage();
 											sendMessage.setChatId(sendMediaGroup.getChatId());
 											sendMessage.setReplyToMessageId(sendMessage.getReplyToMessageId());
 											sendMessage.setText("Не удалось загрузить картинку по адресу: " + inputMedia.getMedia());
-											try {
+											try
+											{
 													bot.execute(sendMessage);
-											} catch (TelegramApiException e) {
+											}
+											catch(TelegramApiException e)
+											{
 													e.printStackTrace();
 											}
 									}

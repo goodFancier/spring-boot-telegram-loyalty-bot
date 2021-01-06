@@ -24,6 +24,8 @@ public class ApacheHttp
 				{
 						HttpRequestBase request = new HttpGet(url);
 						HttpResponse response = httpClient.execute(request);
+						if (response.getEntity() == null)
+							return null;
 						rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8));
 						String line = "";
 						while((line = rd.readLine()) != null)

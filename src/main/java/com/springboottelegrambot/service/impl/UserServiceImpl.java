@@ -43,23 +43,19 @@ public class UserServiceImpl implements UserService
 				return userRepository.save(user);
 		}
 
-		public User updateUserInfo(User userFrom)
+		public User updateUserInfo(User user, org.telegram.telegrambots.meta.api.objects.User telegramUser)
 		{
-				String username = userFrom.getUsername();
-				Long userId = userFrom.getRecID();
-				User user = loadUser(userId);
 				if(user == null)
 				{
 						user = new User();
-						user.setRecID(userId);
-						user.setUsername(username);
+						user.setUsername(telegramUser.getUserName());
 						user.setAccessLevel(AccessLevels.NEWCOMER);
 						user = save(user);
 				}
 				else
-						if(!user.getUsername().equals(username))
+						if(!user.getUsername().equals(telegramUser.getUserName()))
 						{
-								user.setUsername(username);
+								user.setUsername(telegramUser.getUserName());
 								user = save(user);
 						}
 				return user;

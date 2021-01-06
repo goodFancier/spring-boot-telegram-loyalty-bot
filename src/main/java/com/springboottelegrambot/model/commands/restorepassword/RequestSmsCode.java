@@ -4,11 +4,19 @@ import com.springboottelegrambot.model.dto.CommandParent;
 import com.springboottelegrambot.network.ApacheHttp;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.io.IOException;
 
 @Component
 public class RequestSmsCode implements CommandParent<SendMessage>
 {
+		public RequestSmsCode()
+		{
+				this.apacheHttp = new ApacheHttp();
+		}
+
 		ApacheHttp apacheHttp;
 
 		public RequestSmsCode(ApacheHttp apacheHttp)
@@ -19,19 +27,30 @@ public class RequestSmsCode implements CommandParent<SendMessage>
 		@Override
 		public SendMessage parse(Update update) throws Exception
 		{
-				String ret;
-				String url = "http://localhost:8090/buyers/requestSMSCodeNewLogic?retailer=9vjsj67qp9&phone=79991898516&phoneNew=79991898516&requestType=Restore";
-				int i = 0;
-				do
-				{
-						ret = apacheHttp.sendGetRequest(url);
-						i++;
-				}
-				while(ret.equals("") && i < 5);
 				SendMessage sendMessage = new SendMessage();
-				sendMessage.setChatId(update.getMessage().getChatId().toString());
-				sendMessage.setText(update.getMessage().getText());
-				sendMessage.setReplyToMessageId(update.getMessage().getMessageId());
+				Message message = getMessageFromUpdate(update);
+				if (!update.hasMessage())
+				{
+						sendMessage.setChatId(message.getChatId().toString());
+						sendMessage.setReplyToMessageId(message.getMessageId());
+						sendMessage.setText("Укажите ваш номер телефона на который будет отправлено смс с кодом подтверждения");
+				}
+				else if (update.getCallbackQuery() != null)
+				{
+						String url = "http://localhost:8090/Shopper.Rest/buyers/requestSMSCodeNewLogic?retailer=9vjsj67qp9&phone=79991898516&phoneNew=79991898516&requestType=Restore";
+
+						try
+						{
+								apacheHttp.sendGetRequest(url);
+								sendMessage.setText("Смс с кодом подтверждения отправлено на номер: %s");
+						}
+						catch(IOException e)
+						{
+								sendMessage.setText("Ошибка при запросе смс кода");
+						}
+						sendMessage.setReplyToMessageId(message.getMessageId());
+						sendMessage.setChatId(message.getChatId().toString());
+				}
 				return sendMessage;
 		}
 }
