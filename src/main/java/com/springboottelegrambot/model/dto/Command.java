@@ -1,6 +1,7 @@
 package com.springboottelegrambot.model.dto;
 
 import com.springboottelegrambot.model.enums.AccessLevels;
+import com.springboottelegrambot.model.enums.CommandType;
 
 import javax.persistence.*;
 
@@ -11,17 +12,15 @@ public class Command
 		@GeneratedValue(strategy = GenerationType.AUTO)
 		private Long recID;
 
-		private String commandName;
-
 		private String description;
-
-		private String className;
 
 		@Column(columnDefinition = "enum('BANNED', 'NEWCOMER', 'FAMILIAR', 'TRUSTED', 'MODERATOR', 'ADMIN')")
 		@Enumerated(EnumType.STRING)
 		private AccessLevels accessLevel;
 
-		private String help;
+		@Column(columnDefinition = "enum('InitLoginScreen', 'RequestSmsCode', 'Моя карта', 'Profile', 'Summary', 'Offers')")
+		@Enumerated(EnumType.STRING)
+		private CommandType type;
 
 		public Long getRecID()
 		{
@@ -31,16 +30,6 @@ public class Command
 		public void setRecID(Long recID)
 		{
 				this.recID = recID;
-		}
-
-		public String getCommandName()
-		{
-				return commandName;
-		}
-
-		public void setCommandName(String commandName)
-		{
-				this.commandName = commandName;
 		}
 
 		public String getDescription()
@@ -53,16 +42,6 @@ public class Command
 				this.description = description;
 		}
 
-		public String getClassName()
-		{
-				return className;
-		}
-
-		public void setClassName(String className)
-		{
-				this.className = className;
-		}
-
 		public AccessLevels getAccessLevel()
 		{
 				return accessLevel;
@@ -73,13 +52,13 @@ public class Command
 				this.accessLevel = accessLevel;
 		}
 
-		public String getHelp()
+		public CommandType getType()
 		{
-				return help;
+				return type;
 		}
 
-		public void setHelp(String help)
+		public void setType(CommandType type)
 		{
-				this.help = help;
+				this.type = type;
 		}
 }
