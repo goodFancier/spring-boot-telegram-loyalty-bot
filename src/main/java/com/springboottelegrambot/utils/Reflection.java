@@ -1,7 +1,7 @@
 package com.springboottelegrambot.utils;
 
 import com.springboottelegrambot.model.dto.Command;
-import com.springboottelegrambot.model.dto.CommandParent;
+import com.springboottelegrambot.model.commands.CommandParent;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.springframework.stereotype.Component;

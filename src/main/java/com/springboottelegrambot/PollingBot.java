@@ -4,7 +4,7 @@ import com.springboottelegrambot.config.BotConfig;
 import com.springboottelegrambot.model.commands.DefaultCommand;
 import com.springboottelegrambot.model.dto.Chat;
 import com.springboottelegrambot.model.dto.Command;
-import com.springboottelegrambot.model.dto.CommandParent;
+import com.springboottelegrambot.model.commands.CommandParent;
 import com.springboottelegrambot.model.dto.CommandWaiting;
 import com.springboottelegrambot.model.enums.AccessLevels;
 import com.springboottelegrambot.model.enums.CommandType;
@@ -126,10 +126,10 @@ public class PollingBot extends TelegramLongPollingBot
 						telegramUser = message.getFrom();
 				}
 				Long chatId = message.getChatId();
-				Long userId = Long.valueOf(telegramUser.getId());
-				log.info("From " + chatId + " (" + telegramUser.getUserName() + "-" + userId + "): " + textOfMessage);
-				com.springboottelegrambot.model.dto.User user = userService.loadUser(userId);
-				user = userService.updateUserInfo(user, telegramUser);
+				String userCode = String.valueOf(telegramUser.getId());
+				log.info("From " + chatId + " (" + telegramUser.getFirstName() + " " + telegramUser.getLastName() + "-" + userCode + "): " + textOfMessage);
+				com.springboottelegrambot.model.dto.User user = userService.loadUser(userCode);
+				user = userService.updateUserInfo(user, telegramUser, userCode);
 				if(user.getAccessLevel().equals(AccessLevels.BANNED))
 				{
 						log.info("Banned user. Ignoring...");
@@ -143,7 +143,7 @@ public class PollingBot extends TelegramLongPollingBot
 				boolean isCmdFound = false;
 				for(CommandType commandType : CommandType.values())
 				{
-						if(commandType.getTitle().equals(textOfMessage))
+						if(commandType.getCommandName().equals(textOfMessage))
 						{
 								command = commandService.findCommandByType(commandType);
 								isCmdFound = true;
@@ -183,7 +183,7 @@ public class PollingBot extends TelegramLongPollingBot
 								}
 						}
 						log.warn(String.format("Не найдено команд в базе данных с типом: %s", textOfMessage));
-						commandHandler.handle();
+						commandHandler.handle(user);
 				}
 				else
 				{
@@ -205,7 +205,7 @@ public class PollingBot extends TelegramLongPollingBot
 										e.printStackTrace();
 								}
 								if(commandHandler != null)
-										commandHandler.handle();
+										commandHandler.handle(user);
 						}
 				}
 		}

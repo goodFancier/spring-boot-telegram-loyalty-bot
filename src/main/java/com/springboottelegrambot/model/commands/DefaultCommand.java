@@ -1,6 +1,6 @@
 package com.springboottelegrambot.model.commands;
 
-import com.springboottelegrambot.model.dto.CommandParent;
+import com.springboottelegrambot.model.dto.User;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -19,17 +19,9 @@ import java.util.List;
 public class DefaultCommand implements CommandParent<PartialBotApiMethod<?>>
 {
 		@Override
-		public PartialBotApiMethod<?> parse(Update update) throws Exception
+		public PartialBotApiMethod<?> parse(User user, Update update)
 		{
-				Message message = getMessageFromUpdate(update);
-				if(update.hasCallbackQuery())
-				{
-						return buildMainPageWithCallback(message);
-				}
-				else
-				{
-						return buildMainPage(message);
-				}
+				return buildMainPage(getMessageFromUpdate(update));
 		}
 
 		private SendMessage buildMainPage(Message message)
@@ -39,12 +31,12 @@ public class DefaultCommand implements CommandParent<PartialBotApiMethod<?>>
 				sendMessage.setReplyToMessageId(message.getMessageId());
 				sendMessage.enableHtml(true);
 				sendMessage.setText("<b>Добро пожаловать!</b>");
-				sendMessage.setReplyMarkup(buildMainKeyboard());
 				initMainMenuButtons(sendMessage);
 				return sendMessage;
 		}
 
-		public void initMainMenuButtons(SendMessage sendMessage) {
+		public void initMainMenuButtons(SendMessage sendMessage)
+		{
 				ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
 				sendMessage.setReplyMarkup(replyKeyboardMarkup);
 				replyKeyboardMarkup.setSelective(true);
@@ -64,30 +56,5 @@ public class DefaultCommand implements CommandParent<PartialBotApiMethod<?>>
 				keyboard.add(keyboardThirdRow);
 				keyboard.add(keyboardFourthRow);
 				replyKeyboardMarkup.setKeyboard(keyboard);
-		}
-
-		private EditMessageText buildMainPageWithCallback(Message message)
-		{
-				EditMessageText editMessageText = new EditMessageText();
-				editMessageText.setChatId(message.getChatId().toString());
-				editMessageText.setMessageId(message.getMessageId());
-				editMessageText.enableHtml(true);
-				editMessageText.setText("<b>Войдите по номеру телефона</b>");
-				editMessageText.setReplyMarkup(buildMainKeyboard());
-				return editMessageText;
-		}
-
-		private InlineKeyboardMarkup buildMainKeyboard()
-		{
-				InlineKeyboardButton loginByPhoneBtn = new InlineKeyboardButton();
-				loginByPhoneBtn.setText("Войти по номеру телефона");
-				loginByPhoneBtn.setCallbackData("RequestSmsCode");
-				List<InlineKeyboardButton> loginRow = new ArrayList<>();
-				loginRow.add(loginByPhoneBtn);
-				List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-				rows.add(loginRow);
-				InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-				inlineKeyboardMarkup.setKeyboard(rows);
-				return inlineKeyboardMarkup;
 		}
 }

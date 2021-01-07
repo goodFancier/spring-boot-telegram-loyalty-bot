@@ -2,22 +2,30 @@ package com.springboottelegrambot.model.enums;
 
 public enum CommandType
 {
-		InitLoginScreen("Войти по номеру телефона"),
-		RequestSmsCode("Получить смс код"),
-		Card("Моя карта"),
-		Profile("Профиль"),
-		Summary("Статистика покупок"),
-		Offers("Лента");
+		InitLoginScreen("Войти по номеру телефона", AccessLevels.NEWCOMER),
+		RequestSmsCode("Получить смс код", AccessLevels.NEWCOMER),
+		Card("Моя карта", AccessLevels.NEWCOMER),
+		Profile("Профиль", AccessLevels.NEWCOMER),
+		Summary("Статистика покупок", AccessLevels.NEWCOMER),
+		Offers("Лента", AccessLevels.NEWCOMER);
 
-		private final String title;
+		private final String commandName;
 
-		CommandType(String title)
+		private final AccessLevels accessLevels;
+
+		CommandType(String commandName, AccessLevels accessLevels)
 		{
-				this.title = title;
+				this.commandName = commandName;
+				this.accessLevels = accessLevels;
 		}
 
-		public String getTitle()
+		public String getCommandName()
 		{
-				return title;
+				return commandName;
+		}
+
+		public AccessLevels getAccessLevels()
+		{
+				return accessLevels;
 		}
 }

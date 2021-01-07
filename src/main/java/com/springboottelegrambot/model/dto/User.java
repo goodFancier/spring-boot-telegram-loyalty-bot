@@ -3,6 +3,7 @@ package com.springboottelegrambot.model.dto;
 import com.springboottelegrambot.model.enums.AccessLevels;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 public class User
@@ -17,6 +18,10 @@ public class User
 		@Column(columnDefinition = "enum('BANNED', 'NEWCOMER', 'FAMILIAR', 'TRUSTED', 'MODERATOR', 'ADMIN')")
 		@Enumerated(EnumType.STRING)
 		private AccessLevels accessLevel;
+
+		private String internalCode;
+
+		private Date verified;
 
 		public Long getRecID()
 		{
@@ -46,5 +51,25 @@ public class User
 		public void setAccessLevel(AccessLevels accessLevel)
 		{
 				this.accessLevel = accessLevel;
+		}
+
+		public String getInternalCode()
+		{
+				return internalCode;
+		}
+
+		public void setInternalCode(String internalCode)
+		{
+				this.internalCode = internalCode;
+		}
+
+		public Date getVerified()
+		{
+				return verified;
+		}
+
+		public void setVerified(Date verified)
+		{
+				this.verified = verified;
 		}
 }

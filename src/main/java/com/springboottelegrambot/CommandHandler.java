@@ -1,7 +1,8 @@
 package com.springboottelegrambot;
 
 import com.springboottelegrambot.exception.BotException;
-import com.springboottelegrambot.model.dto.CommandParent;
+import com.springboottelegrambot.model.commands.CommandParent;
+import com.springboottelegrambot.model.dto.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
@@ -32,7 +33,7 @@ public class CommandHandler
 				this.update = update;
 		}
 
-		public void handle()
+		public void handle(User user)
 		{
 				log.debug("Found a command {}", command.toString());
 				Message message = update.getMessage();
@@ -57,7 +58,7 @@ public class CommandHandler
 				}
 				try
 				{
-						PartialBotApiMethod<?> method = command.parse(update);
+						PartialBotApiMethod<?> method = command.parse(user, update);
 						if(method instanceof SendMessage)
 						{
 								SendMessage sendMessage = (SendMessage)method;
