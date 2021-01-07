@@ -8,7 +8,9 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +40,30 @@ public class InitLoginScreen implements CommandParent<PartialBotApiMethod<?>>
 				sendMessage.enableHtml(true);
 				sendMessage.setText("<b>Войдите по номеру телефона</b>");
 				sendMessage.setReplyMarkup(buildMainKeyboard());
+				initMainMenuButtons(sendMessage);
 				return sendMessage;
+		}
+
+		public void initMainMenuButtons(SendMessage sendMessage) {
+				ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+				sendMessage.setReplyMarkup(replyKeyboardMarkup);
+				replyKeyboardMarkup.setSelective(true);
+				replyKeyboardMarkup.setResizeKeyboard(true);
+				replyKeyboardMarkup.setOneTimeKeyboard(false);
+				List<KeyboardRow> keyboard = new ArrayList<>();
+				KeyboardRow keyboardFirstRow = new KeyboardRow();
+				keyboardFirstRow.add("Лента");
+				KeyboardRow keyboardSecondRow = new KeyboardRow();
+				keyboardSecondRow.add("Моя карта");
+				KeyboardRow keyboardThirdRow = new KeyboardRow();
+				keyboardThirdRow.add("Статистика покупок");
+				KeyboardRow keyboardFourthRow = new KeyboardRow();
+				keyboardFourthRow.add("Профиль");
+				keyboard.add(keyboardFirstRow);
+				keyboard.add(keyboardSecondRow);
+				keyboard.add(keyboardThirdRow);
+				keyboard.add(keyboardFourthRow);
+				replyKeyboardMarkup.setKeyboard(keyboard);
 		}
 
 		private EditMessageText buildMainPageWithCallback(Message message)
