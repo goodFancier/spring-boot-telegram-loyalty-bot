@@ -18,7 +18,7 @@ public class Command
 		@Enumerated(EnumType.STRING)
 		private AccessLevels accessLevel;
 
-		@Column(columnDefinition = "enum('InitLoginScreen', 'RequestSmsCode', 'Моя карта', 'Profile', 'Summary', 'Offers')")
+		@Column(columnDefinition = "enum('InitLoginScreen', 'RequestSmsCode', 'Card', 'Profile', 'Summary', 'Offers')")
 		@Enumerated(EnumType.STRING)
 		private CommandType type;
 

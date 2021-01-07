@@ -1,4 +1,4 @@
-package com.springboottelegrambot.model.commands.login;
+package com.springboottelegrambot.model.commands;
 
 import com.springboottelegrambot.model.dto.CommandParent;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class InitLoginScreen implements CommandParent<PartialBotApiMethod<?>>
+public class DefaultCommand implements CommandParent<PartialBotApiMethod<?>>
 {
 		@Override
 		public PartialBotApiMethod<?> parse(Update update) throws Exception
@@ -38,7 +38,7 @@ public class InitLoginScreen implements CommandParent<PartialBotApiMethod<?>>
 				sendMessage.setChatId(message.getChatId().toString());
 				sendMessage.setReplyToMessageId(message.getMessageId());
 				sendMessage.enableHtml(true);
-				sendMessage.setText("<b>Войдите по номеру телефона</b>");
+				sendMessage.setText("<b>Добро пожаловать!</b>");
 				sendMessage.setReplyMarkup(buildMainKeyboard());
 				initMainMenuButtons(sendMessage);
 				return sendMessage;

@@ -7,7 +7,7 @@ public enum CommandType
 		Card("Моя карта"),
 		Profile("Профиль"),
 		Summary("Статистика покупок"),
-		Offers("Акции");
+		Offers("Лента");
 
 		private final String title;
 

@@ -6,6 +6,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,6 +17,10 @@ public class Reflection
 		{
 				Reflections reflections = new Reflections("com.springboottelegrambot.model.commands", CommandParent.class, new SubTypesScanner(false));
 				Set<Class<? extends CommandParent>> commands = reflections.getSubTypesOf(CommandParent.class);
-				return commands.stream().filter(o -> o.getSimpleName().equals(command.getType().name())).collect(Collectors.toList()).get(0);
+				List<Class<? extends CommandParent>> foundCmds = commands.stream().filter(o -> o.getSimpleName().equals(command.getType().name())).collect(Collectors.toList());
+				if(foundCmds.isEmpty())
+						return null;
+				else
+						return foundCmds.get(0);
 		}
 }
