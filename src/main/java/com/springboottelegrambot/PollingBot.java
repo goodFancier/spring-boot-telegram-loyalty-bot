@@ -1,7 +1,7 @@
 package com.springboottelegrambot;
 
 import com.springboottelegrambot.config.BotConfig;
-import com.springboottelegrambot.model.commands.login.InitLoginScreen;
+import com.springboottelegrambot.model.commands.DefaultCommand;
 import com.springboottelegrambot.model.dto.Chat;
 import com.springboottelegrambot.model.dto.Command;
 import com.springboottelegrambot.model.dto.CommandParent;
@@ -139,11 +139,23 @@ public class PollingBot extends TelegramLongPollingBot
 				{
 						return;
 				}
-				Command command = commandService.findCommandByType(CommandType.valueOf(textOfMessage));
+				Command command = null;
+				boolean isCmdFound = false;
+				for(CommandType commandType : CommandType.values())
+				{
+						if(commandType.getTitle().equals(textOfMessage))
+						{
+								command = commandService.findCommandByType(commandType);
+								isCmdFound = true;
+								break;
+						}
+				}
+				if(!isCmdFound)
+						log.warn(String.format("Неизвестная команда: %s. Выполняется базовая команда", textOfMessage));
 				if(command == null)
 				{
 						Optional<Chat> chat = chatRepository.findByRecID(chatId);
-						CommandHandler commandHandler = new CommandHandler(this, new InitLoginScreen(), update);
+						CommandHandler commandHandler = new CommandHandler(this, new DefaultCommand(), update);
 						if(chat.isPresent())
 						{
 								Optional<CommandWaiting> commandWaiting = commandWaitingRepository.findByChatAndUser(chat.get(), user);
@@ -155,6 +167,11 @@ public class PollingBot extends TelegramLongPollingBot
 								if(command != null)
 								{
 										Class<? extends CommandParent> foundCommand = Reflection.findCommandByCmdType(command);
+										if(foundCommand == null)
+										{
+												log.warn(String.format("Не найден класс команды: %s", command.getType().name()));
+												return;
+										}
 										try
 										{
 												commandHandler = new CommandHandler(this, foundCommand.getDeclaredConstructor().newInstance(), update);
@@ -165,11 +182,17 @@ public class PollingBot extends TelegramLongPollingBot
 										}
 								}
 						}
+						log.warn(String.format("Не найдено команд в базе данных с типом: %s", textOfMessage));
 						commandHandler.handle();
 				}
 				else
 				{
 						Class<? extends CommandParent> foundCommand = Reflection.findCommandByCmdType(command);
+						if(foundCommand == null)
+						{
+								log.warn(String.format("Не найден класс команды: %s", command.getType().name()));
+								return;
+						}
 						if(userService.isUserHaveAccessForCommand(user.getAccessLevel(), command.getAccessLevel()))
 						{
 								CommandHandler commandHandler = null;
