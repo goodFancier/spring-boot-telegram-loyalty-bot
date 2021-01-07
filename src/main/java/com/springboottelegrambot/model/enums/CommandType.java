@@ -11,12 +11,12 @@ public enum CommandType
 
 		private final String commandName;
 
-		private final AccessLevels accessLevels;
+		private final AccessLevels accessLevel;
 
-		CommandType(String commandName, AccessLevels accessLevels)
+		CommandType(String commandName, AccessLevels accessLevel)
 		{
 				this.commandName = commandName;
-				this.accessLevels = accessLevels;
+				this.accessLevel = accessLevel;
 		}
 
 		public String getCommandName()
@@ -24,8 +24,8 @@ public enum CommandType
 				return commandName;
 		}
 
-		public AccessLevels getAccessLevels()
+		public AccessLevels getAccessLevel()
 		{
-				return accessLevels;
+				return accessLevel;
 		}
 }
