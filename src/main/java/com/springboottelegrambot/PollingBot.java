@@ -5,12 +5,11 @@ import com.springboottelegrambot.model.commands.DefaultCommand;
 import com.springboottelegrambot.model.commands.CommandParent;
 import com.springboottelegrambot.model.enums.AccessLevels;
 import com.springboottelegrambot.model.enums.CommandType;
-import com.springboottelegrambot.repository.ChatRepository;
+import com.springboottelegrambot.repository.MessageRepository;
 import com.springboottelegrambot.service.UserService;
 import com.springboottelegrambot.utils.Reflection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetMe;
@@ -21,6 +20,8 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
+import java.util.Objects;
 
 @Component
 public class PollingBot extends TelegramLongPollingBot
@@ -29,23 +30,18 @@ public class PollingBot extends TelegramLongPollingBot
 
 		private final BotConfig botConfig;
 
-		private final ChatRepository chatRepository;
-
-		private final ApplicationContext context;
+		private final MessageRepository messageRepository;
 
 		private final Logger log = LoggerFactory.getLogger(PollingBot.class);
 
 		public PollingBot(
 			UserService userService,
-			ChatRepository chatRepository,
-			ApplicationContext context,
 			BotConfig botConfig,
-			Reflection reflection)
+			MessageRepository messageRepository)
 		{
-				this.chatRepository = chatRepository;
-				this.context = context;
 				this.userService = userService;
 				this.botConfig = botConfig;
+				this.messageRepository = messageRepository;
 		}
 
 		@Override
@@ -136,6 +132,12 @@ public class PollingBot extends TelegramLongPollingBot
 				}
 				if(foundCmd == null)
 				{
+						com.springboottelegrambot.model.dto.Message lastMessage = Objects.requireNonNull(messageRepository.findFirstByUserOrderByDateDesc(user).orElse(null));
+						if(lastMessage.getTextOfMessage().equals("RequestSmsCode"))
+								foundCmd = lastMessage.getCommandType();
+				}
+				if(foundCmd == null)
+				{
 						log.warn(String.format("Неизвестная команда: %s. Выполняется базовая команда", textOfMessage));
 						CommandHandler commandHandler = new CommandHandler(this, new DefaultCommand(), update);
 						commandHandler.handle(user);
@@ -163,5 +165,7 @@ public class PollingBot extends TelegramLongPollingBot
 										commandHandler.handle(user);
 						}
 				}
+				com.springboottelegrambot.model.dto.Message dbMessage = new com.springboottelegrambot.model.dto.Message(textOfMessage, new Date(), foundCmd, user);
+				messageRepository.save(dbMessage);
 		}
 }

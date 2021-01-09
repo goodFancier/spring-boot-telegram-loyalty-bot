@@ -33,7 +33,7 @@ public class ApacheHttp
 				}
 				catch(IOException e)
 				{
-						throw new IOException(String.format("ошибка при отправке GET запроса '%s'", url), e);
+						throw new IOException(String.format("ошибка при отправке GET запроса '%s' {}", url), e);
 				}
 				finally
 				{

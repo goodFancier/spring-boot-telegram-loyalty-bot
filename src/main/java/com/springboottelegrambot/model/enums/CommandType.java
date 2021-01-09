@@ -3,7 +3,7 @@ package com.springboottelegrambot.model.enums;
 public enum CommandType
 {
 		InitLoginScreen("Войти по номеру телефона", AccessLevels.NEWCOMER),
-		RequestSmsCode("Получить смс код", AccessLevels.NEWCOMER),
+		RequestSmsCode("RequestSmsCode", AccessLevels.NEWCOMER),
 		Card("Моя карта", AccessLevels.NEWCOMER),
 		Profile("Профиль", AccessLevels.NEWCOMER),
 		Summary("Статистика покупок", AccessLevels.NEWCOMER),

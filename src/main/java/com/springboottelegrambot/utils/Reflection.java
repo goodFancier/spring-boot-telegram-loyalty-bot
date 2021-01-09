@@ -4,13 +4,11 @@ import com.springboottelegrambot.model.commands.CommandParent;
 import com.springboottelegrambot.model.enums.CommandType;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component
 public class Reflection
 {
 		public static Class<? extends CommandParent> findCommandByCmdType(CommandType commandType)

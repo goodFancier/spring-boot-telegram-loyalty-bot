@@ -1,8 +1,13 @@
 package com.springboottelegrambot.model.commands.restorepassword;
 
+import com.springboottelegrambot.config.BotConfig;
 import com.springboottelegrambot.model.commands.CommandParent;
 import com.springboottelegrambot.model.dto.User;
 import com.springboottelegrambot.network.ApacheHttp;
+import com.springboottelegrambot.utils.PhoneUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -13,16 +18,25 @@ import java.io.IOException;
 @Component
 public class RequestSmsCode implements CommandParent<SendMessage>
 {
-		public RequestSmsCode()
-		{
-				this.apacheHttp = new ApacheHttp();
-		}
+		private final Logger log = LoggerFactory.getLogger(RequestSmsCode.class);
 
+		@Autowired
 		ApacheHttp apacheHttp;
 
-		public RequestSmsCode(ApacheHttp apacheHttp)
+		@Autowired
+		BotConfig botConfig;
+
+		@Autowired
+		public RequestSmsCode(
+			ApacheHttp apacheHttp,
+			BotConfig botConfig)
 		{
 				this.apacheHttp = apacheHttp;
+				this.botConfig = botConfig;
+		}
+
+		public RequestSmsCode()
+		{
 		}
 
 		@Override
@@ -37,21 +51,30 @@ public class RequestSmsCode implements CommandParent<SendMessage>
 						sendMessage.setText("Укажите ваш номер телефона на который будет отправлено смс с кодом подтверждения");
 				}
 				else
-						if(update.getCallbackQuery() != null)
+				{
+						String phone = PhoneUtils.processPhoneNumber(message.getText());
+						if(phone.length() != 11)
 						{
-								String url = "http://localhost:8090/Shopper.Rest/buyers/requestSMSCodeNewLogic?retailer=9vjsj67qp9&phone=79991898516&phoneNew=79991898516&requestType=Restore";
-								try
-								{
-										apacheHttp.sendGetRequest(url);
-										sendMessage.setText("Смс с кодом подтверждения отправлено на номер: %s");
-								}
-								catch(IOException e)
-								{
-										sendMessage.setText("Ошибка при запросе смс кода");
-								}
-								sendMessage.setReplyToMessageId(message.getMessageId());
+								// TODO: бросать исключению BotException
+								sendMessage.setText("Ошибка при запросе смс кода. Неверно указан номер телефона");
 								sendMessage.setChatId(message.getChatId().toString());
+								sendMessage.setReplyToMessageId(message.getMessageId());
+								return sendMessage;
 						}
+						String url = String.format("http://localhost:8090/Shopper.Rest/buyers/requestSMSCodeNewLogic?retailer=%s&phone=%s&phoneNew=%s&requestType=Restore", botConfig.getRetailer(), message.getText(), message.getText());
+						try
+						{
+								apacheHttp.sendGetRequest(url);
+								sendMessage.setText(String.format("Смс с кодом подтверждения отправлено на номер: %s", message.getText()));
+						}
+						catch(IOException e)
+						{
+								log.error("Ошибка при запросе смс кода {}", e.getCause().getMessage());
+								sendMessage.setText("Ошибка при запросе смс кода");
+						}
+						sendMessage.setReplyToMessageId(message.getMessageId());
+						sendMessage.setChatId(message.getChatId().toString());
+				}
 				return sendMessage;
 		}
 }
