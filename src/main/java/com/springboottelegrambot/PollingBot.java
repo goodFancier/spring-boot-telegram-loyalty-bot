@@ -7,9 +7,9 @@ import com.springboottelegrambot.model.enums.AccessLevels;
 import com.springboottelegrambot.model.enums.CommandType;
 import com.springboottelegrambot.repository.MessageRepository;
 import com.springboottelegrambot.service.UserService;
-import com.springboottelegrambot.utils.Reflection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetMe;
@@ -34,14 +34,18 @@ public class PollingBot extends TelegramLongPollingBot
 
 		private final Logger log = LoggerFactory.getLogger(PollingBot.class);
 
+		private final ApplicationContext context;
+
 		public PollingBot(
 			UserService userService,
 			BotConfig botConfig,
-			MessageRepository messageRepository)
+			MessageRepository messageRepository,
+			ApplicationContext context)
 		{
 				this.userService = userService;
 				this.botConfig = botConfig;
 				this.messageRepository = messageRepository;
+				this.context = context;
 		}
 
 		@Override
@@ -144,7 +148,7 @@ public class PollingBot extends TelegramLongPollingBot
 				}
 				else
 				{
-						Class<? extends CommandParent> foundCommand = Reflection.findCommandByCmdType(foundCmd);
+						CommandParent foundCommand = (CommandParent)context.getBean(foundCmd.name());
 						if(foundCommand == null)
 						{
 								log.warn(String.format("Не найден класс команды: %s", foundCmd.name()));
@@ -153,14 +157,7 @@ public class PollingBot extends TelegramLongPollingBot
 						if(userService.isUserHaveAccessForCommand(user.getAccessLevel(), foundCmd.getAccessLevel()))
 						{
 								CommandHandler commandHandler = null;
-								try
-								{
-										commandHandler = new CommandHandler(this, foundCommand.getDeclaredConstructor().newInstance(), update);
-								}
-								catch(InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
-								{
-										e.printStackTrace();
-								}
+								commandHandler = new CommandHandler(this, foundCommand, update);
 								if(commandHandler != null)
 										commandHandler.handle(user);
 						}

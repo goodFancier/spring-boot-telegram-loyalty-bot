@@ -26,7 +26,7 @@ public class CommandHandler
 
 		private final Update update;
 
-		public CommandHandler(PollingBot bot, CommandParent<?> command, Update update)
+		public CommandHandler(PollingBot bot, CommandParent command, Update update)
 		{
 				this.bot = bot;
 				this.command = command;
