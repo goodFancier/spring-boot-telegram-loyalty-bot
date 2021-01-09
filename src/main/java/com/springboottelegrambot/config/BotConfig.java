@@ -2,6 +2,8 @@ package com.springboottelegrambot.config;
 
 import com.springboottelegrambot.model.commands.card.Card;
 import com.springboottelegrambot.model.commands.restorepassword.RequestSmsCode;
+import com.springboottelegrambot.network.ApacheHttp;
+import com.springboottelegrambot.network.impl.RestServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +31,9 @@ public class BotConfig
 		@Value("${retailer}")
 		private String retailer;
 
+		@Value("${network.baseUrl}")
+		private String baseUrl;
+
 		@Bean(name = "Card")
 		public Card card()
 		{
@@ -38,7 +43,7 @@ public class BotConfig
 		@Bean(name = "RequestSmsCode")
 		public RequestSmsCode requestSmsCode()
 		{
-				return new RequestSmsCode();
+				return new RequestSmsCode(this, new RestServiceImpl(new ApacheHttp(), this));
 		}
 
 		public String getTelegramBotApiToken()
@@ -99,5 +104,15 @@ public class BotConfig
 		public void setRetailer(String retailer)
 		{
 				this.retailer = retailer;
+		}
+
+		public String getBaseUrl()
+		{
+				return baseUrl;
+		}
+
+		public void setBaseUrl(String baseUrl)
+		{
+				this.baseUrl = baseUrl;
 		}
 }
