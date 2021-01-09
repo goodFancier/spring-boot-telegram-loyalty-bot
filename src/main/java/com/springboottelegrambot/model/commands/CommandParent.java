@@ -1,5 +1,6 @@
-package com.springboottelegrambot.model.dto;
+package com.springboottelegrambot.model.commands;
 
+import com.springboottelegrambot.model.dto.User;
 import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -8,7 +9,7 @@ import static com.springboottelegrambot.utils.TextUtils.getPotentialCommandInTex
 
 public interface CommandParent<T extends PartialBotApiMethod<?>>
 {
-		T parse(Update update) throws Exception;
+		T parse(User user, Update update) throws Exception;
 
 		default Message getMessageFromUpdate(Update update)
 		{

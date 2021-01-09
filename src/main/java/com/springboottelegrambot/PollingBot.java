@@ -2,17 +2,11 @@ package com.springboottelegrambot;
 
 import com.springboottelegrambot.config.BotConfig;
 import com.springboottelegrambot.model.commands.DefaultCommand;
-import com.springboottelegrambot.model.dto.Chat;
-import com.springboottelegrambot.model.dto.Command;
-import com.springboottelegrambot.model.dto.CommandParent;
-import com.springboottelegrambot.model.dto.CommandWaiting;
+import com.springboottelegrambot.model.commands.CommandParent;
 import com.springboottelegrambot.model.enums.AccessLevels;
 import com.springboottelegrambot.model.enums.CommandType;
-import com.springboottelegrambot.repository.ChatRepository;
-import com.springboottelegrambot.repository.CommandWaitingRepository;
-import com.springboottelegrambot.service.CommandService;
+import com.springboottelegrambot.repository.MessageRepository;
 import com.springboottelegrambot.service.UserService;
-import com.springboottelegrambot.utils.Reflection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -26,7 +20,8 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Date;
+import java.util.Objects;
 
 @Component
 public class PollingBot extends TelegramLongPollingBot
@@ -35,31 +30,22 @@ public class PollingBot extends TelegramLongPollingBot
 
 		private final BotConfig botConfig;
 
-		private final CommandService commandService;
-
-		private final CommandWaitingRepository commandWaitingRepository;
-
-		private final ChatRepository chatRepository;
-
-		private final ApplicationContext context;
+		private final MessageRepository messageRepository;
 
 		private final Logger log = LoggerFactory.getLogger(PollingBot.class);
 
+		private final ApplicationContext context;
+
 		public PollingBot(
 			UserService userService,
-			CommandWaitingRepository commandWaitingRepository,
-			ChatRepository chatRepository,
-			ApplicationContext context,
 			BotConfig botConfig,
-			CommandService commandService,
-			Reflection reflection)
+			MessageRepository messageRepository,
+			ApplicationContext context)
 		{
-				this.commandWaitingRepository = commandWaitingRepository;
-				this.chatRepository = chatRepository;
-				this.context = context;
 				this.userService = userService;
 				this.botConfig = botConfig;
-				this.commandService = commandService;
+				this.messageRepository = messageRepository;
+				this.context = context;
 		}
 
 		@Override
@@ -126,10 +112,10 @@ public class PollingBot extends TelegramLongPollingBot
 						telegramUser = message.getFrom();
 				}
 				Long chatId = message.getChatId();
-				Long userId = Long.valueOf(telegramUser.getId());
-				log.info("From " + chatId + " (" + telegramUser.getUserName() + "-" + userId + "): " + textOfMessage);
-				com.springboottelegrambot.model.dto.User user = userService.loadUser(userId);
-				user = userService.updateUserInfo(user, telegramUser);
+				String userCode = String.valueOf(telegramUser.getId());
+				log.info("From " + chatId + " (" + telegramUser.getFirstName() + " " + telegramUser.getLastName() + "-" + userCode + "): " + textOfMessage);
+				com.springboottelegrambot.model.dto.User user = userService.loadUser(userCode);
+				user = userService.updateUserInfo(user, telegramUser, userCode);
 				if(user.getAccessLevel().equals(AccessLevels.BANNED))
 				{
 						log.info("Banned user. Ignoring...");
@@ -139,74 +125,44 @@ public class PollingBot extends TelegramLongPollingBot
 				{
 						return;
 				}
-				Command command = null;
-				boolean isCmdFound = false;
+				CommandType foundCmd = null;
 				for(CommandType commandType : CommandType.values())
 				{
-						if(commandType.getTitle().equals(textOfMessage))
+						if(commandType.getCommandName().equals(textOfMessage))
 						{
-								command = commandService.findCommandByType(commandType);
-								isCmdFound = true;
+								foundCmd = commandType;
 								break;
 						}
 				}
-				if(!isCmdFound)
-						log.warn(String.format("Неизвестная команда: %s. Выполняется базовая команда", textOfMessage));
-				if(command == null)
+				if(foundCmd == null)
 				{
-						Optional<Chat> chat = chatRepository.findByRecID(chatId);
+						com.springboottelegrambot.model.dto.Message lastMessage = Objects.requireNonNull(messageRepository.findFirstByUserOrderByDateDesc(user).orElse(null));
+						if(lastMessage.getTextOfMessage().equals("RequestSmsCode"))
+								foundCmd = lastMessage.getCommandType();
+				}
+				if(foundCmd == null)
+				{
+						log.warn(String.format("Неизвестная команда: %s. Выполняется базовая команда", textOfMessage));
 						CommandHandler commandHandler = new CommandHandler(this, new DefaultCommand(), update);
-						if(chat.isPresent())
-						{
-								Optional<CommandWaiting> commandWaiting = commandWaitingRepository.findByChatAndUser(chat.get(), user);
-								if(commandWaiting.isEmpty())
-								{
-										return;
-								}
-								command = commandService.findCommandByType(commandWaiting.get().getCommand().getType());
-								if(command != null)
-								{
-										Class<? extends CommandParent> foundCommand = Reflection.findCommandByCmdType(command);
-										if(foundCommand == null)
-										{
-												log.warn(String.format("Не найден класс команды: %s", command.getType().name()));
-												return;
-										}
-										try
-										{
-												commandHandler = new CommandHandler(this, foundCommand.getDeclaredConstructor().newInstance(), update);
-										}
-										catch(InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
-										{
-												e.printStackTrace();
-										}
-								}
-						}
-						log.warn(String.format("Не найдено команд в базе данных с типом: %s", textOfMessage));
-						commandHandler.handle();
+						commandHandler.handle(user);
 				}
 				else
 				{
-						Class<? extends CommandParent> foundCommand = Reflection.findCommandByCmdType(command);
+						CommandParent foundCommand = (CommandParent)context.getBean(foundCmd.name());
 						if(foundCommand == null)
 						{
-								log.warn(String.format("Не найден класс команды: %s", command.getType().name()));
+								log.warn(String.format("Не найден класс команды: %s", foundCmd.name()));
 								return;
 						}
-						if(userService.isUserHaveAccessForCommand(user.getAccessLevel(), command.getAccessLevel()))
+						if(userService.isUserHaveAccessForCommand(user.getAccessLevel(), foundCmd.getAccessLevel()))
 						{
 								CommandHandler commandHandler = null;
-								try
-								{
-										commandHandler = new CommandHandler(this, foundCommand.getDeclaredConstructor().newInstance(), update);
-								}
-								catch(InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
-								{
-										e.printStackTrace();
-								}
+								commandHandler = new CommandHandler(this, foundCommand, update);
 								if(commandHandler != null)
-										commandHandler.handle();
+										commandHandler.handle(user);
 						}
 				}
+				com.springboottelegrambot.model.dto.Message dbMessage = new com.springboottelegrambot.model.dto.Message(textOfMessage, new Date(), foundCmd, user);
+				messageRepository.save(dbMessage);
 		}
 }

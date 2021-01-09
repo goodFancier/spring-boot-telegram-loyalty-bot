@@ -1,6 +1,9 @@
 package com.springboottelegrambot.config;
 
+import com.springboottelegrambot.model.commands.card.Card;
+import com.springboottelegrambot.model.commands.restorepassword.RequestSmsCode;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
@@ -22,6 +25,21 @@ public class BotConfig
 
 		@Value("${telegram.telegramBotUsername}")
 		private String telegramBotUsername;
+
+		@Value("${retailer}")
+		private String retailer;
+
+		@Bean(name = "Card")
+		public Card card()
+		{
+				return new Card();
+		}
+
+		@Bean(name = "RequestSmsCode")
+		public RequestSmsCode requestSmsCode()
+		{
+				return new RequestSmsCode();
+		}
 
 		public String getTelegramBotApiToken()
 		{
@@ -71,5 +89,15 @@ public class BotConfig
 		public void setTelegramBotUsername(String telegramBotUsername)
 		{
 				this.telegramBotUsername = telegramBotUsername;
+		}
+
+		public String getRetailer()
+		{
+				return retailer;
+		}
+
+		public void setRetailer(String retailer)
+		{
+				this.retailer = retailer;
 		}
 }

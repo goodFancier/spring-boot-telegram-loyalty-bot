@@ -29,10 +29,10 @@ public class UserServiceImpl implements UserService
 		}
 
 		@Override
-		public User loadUser(Long userId)
+		public User loadUser(String userCode)
 		{
-				log.debug("Request to get User by userId: {} ", userId);
-				Optional<User> user = userRepository.findByRecID(userId);
+				log.debug("Request to get User by userId: {} ", userCode);
+				Optional<User> user = userRepository.findByInternalCode(userCode);
 				return user.orElse(null);
 		}
 
@@ -43,19 +43,20 @@ public class UserServiceImpl implements UserService
 				return userRepository.save(user);
 		}
 
-		public User updateUserInfo(User user, org.telegram.telegrambots.meta.api.objects.User telegramUser)
+		public User updateUserInfo(User user, org.telegram.telegrambots.meta.api.objects.User telegramUser, String userCode)
 		{
 				if(user == null)
 				{
 						user = new User();
-						user.setUsername(telegramUser.getUserName());
+						user.setUsername(telegramUser.getFirstName() + " " + telegramUser.getLastName());
+						user.setInternalCode(userCode);
 						user.setAccessLevel(AccessLevels.NEWCOMER);
 						user = save(user);
 				}
 				else
-						if(!user.getUsername().equals(telegramUser.getUserName()))
+						if(!user.getUsername().equals(telegramUser.getFirstName() + " " + telegramUser.getLastName()))
 						{
-								user.setUsername(telegramUser.getUserName());
+								user.setUsername(telegramUser.getFirstName() + " " + telegramUser.getLastName());
 								user = save(user);
 						}
 				return user;

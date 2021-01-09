@@ -7,9 +7,9 @@ public interface UserService
 {
 		Boolean isUserHaveAccessForCommand(AccessLevels userAccessLevel, AccessLevels commandAccessLevel);
 
-		User loadUser(Long userId);
+		User loadUser(String userCode);
 
 		User save(User user);
 
-		User updateUserInfo(User user, org.telegram.telegrambots.meta.api.objects.User telegramUser);
+		User updateUserInfo(User user, org.telegram.telegrambots.meta.api.objects.User telegramUser, String userCode);
 }
