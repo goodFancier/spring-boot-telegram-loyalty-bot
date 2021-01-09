@@ -3,40 +3,28 @@ package com.springboottelegrambot.model.commands.restorepassword;
 import com.springboottelegrambot.config.BotConfig;
 import com.springboottelegrambot.model.commands.CommandParent;
 import com.springboottelegrambot.model.dto.User;
-import com.springboottelegrambot.network.ApacheHttp;
+import com.springboottelegrambot.network.RestService;
 import com.springboottelegrambot.utils.PhoneUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-
-import java.io.IOException;
 
 @Component
 public class RequestSmsCode implements CommandParent<SendMessage>
 {
 		private final Logger log = LoggerFactory.getLogger(RequestSmsCode.class);
 
-		@Autowired
-		ApacheHttp apacheHttp;
+		private BotConfig botConfig;
 
-		@Autowired
-		BotConfig botConfig;
+		private RestService restService;
 
-		@Autowired
-		public RequestSmsCode(
-			ApacheHttp apacheHttp,
-			BotConfig botConfig)
+		public RequestSmsCode(BotConfig botConfig, RestService restService)
 		{
-				this.apacheHttp = apacheHttp;
 				this.botConfig = botConfig;
-		}
-
-		public RequestSmsCode()
-		{
+				this.restService = restService;
 		}
 
 		@Override
@@ -61,17 +49,7 @@ public class RequestSmsCode implements CommandParent<SendMessage>
 								sendMessage.setReplyToMessageId(message.getMessageId());
 								return sendMessage;
 						}
-						String url = String.format("http://localhost:8090/Shopper.Rest/buyers/requestSMSCodeNewLogic?retailer=%s&phone=%s&phoneNew=%s&requestType=Restore", botConfig.getRetailer(), message.getText(), message.getText());
-						try
-						{
-								apacheHttp.sendGetRequest(url);
-								sendMessage.setText(String.format("Смс с кодом подтверждения отправлено на номер: %s", message.getText()));
-						}
-						catch(IOException e)
-						{
-								log.error("Ошибка при запросе смс кода {}", e.getCause().getMessage());
-								sendMessage.setText("Ошибка при запросе смс кода");
-						}
+						restService.requestSmsCode(sendMessage, botConfig.getRetailer(), message.getText());
 						sendMessage.setReplyToMessageId(message.getMessageId());
 						sendMessage.setChatId(message.getChatId().toString());
 				}
