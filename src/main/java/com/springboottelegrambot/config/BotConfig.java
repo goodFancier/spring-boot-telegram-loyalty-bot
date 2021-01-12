@@ -1,6 +1,7 @@
 package com.springboottelegrambot.config;
 
 import com.springboottelegrambot.model.commands.card.Card;
+import com.springboottelegrambot.model.commands.restorepassword.CheckDisposablePassword;
 import com.springboottelegrambot.model.commands.restorepassword.RequestSmsCode;
 import com.springboottelegrambot.network.ApacheHttp;
 import com.springboottelegrambot.network.impl.RestServiceImpl;
@@ -44,6 +45,12 @@ public class BotConfig
 		public RequestSmsCode requestSmsCode()
 		{
 				return new RequestSmsCode(this, new RestServiceImpl(new ApacheHttp(), this));
+		}
+
+		@Bean(name = "CheckDisposablePassword")
+		public CheckDisposablePassword checkDisposablePassword()
+		{
+				return new CheckDisposablePassword(this, new RestServiceImpl(new ApacheHttp(), this));
 		}
 
 		public String getTelegramBotApiToken()

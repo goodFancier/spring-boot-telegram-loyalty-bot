@@ -7,7 +7,8 @@ public enum CommandType
 		Card("Моя карта", AccessLevels.NEWCOMER),
 		Profile("Профиль", AccessLevels.NEWCOMER),
 		Summary("Статистика покупок", AccessLevels.NEWCOMER),
-		Offers("Лента", AccessLevels.NEWCOMER);
+		Offers("Лента", AccessLevels.NEWCOMER),
+		CheckDisposablePassword("CheckDisposablePassword", AccessLevels.NEWCOMER);
 
 		private final String commandName;
 
