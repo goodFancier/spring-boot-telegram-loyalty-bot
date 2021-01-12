@@ -136,7 +136,7 @@ public class PollingBot extends TelegramLongPollingBot
 				if(foundCmd == null)
 				{
 						com.springboottelegrambot.model.dto.Message lastMessage = Objects.requireNonNull(messageRepository.findFirstByUserOrderByDateDesc(user).orElse(null));
-						if(lastMessage.getTextOfMessage().equals("RequestSmsCode"))
+						if(lastMessage.getTextOfMessage().equals("RequestSmsCode") || lastMessage.getTextOfMessage().equals("CheckDisposablePassword"))
 								foundCmd = lastMessage.getCommandType();
 				}
 				if(foundCmd == null)

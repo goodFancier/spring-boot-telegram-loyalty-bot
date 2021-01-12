@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class DefaultCommand implements CommandParent<PartialBotApiMethod<?>>

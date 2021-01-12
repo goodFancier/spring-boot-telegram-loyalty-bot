@@ -1,8 +1,10 @@
 package com.springboottelegrambot.network.impl;
 
+import com.google.gson.Gson;
 import com.springboottelegrambot.config.BotConfig;
 import com.springboottelegrambot.network.ApacheHttp;
 import com.springboottelegrambot.network.RestService;
+import com.springboottelegrambot.payload.Buyer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,18 +28,35 @@ public class RestServiceImpl implements RestService
 		}
 
 		@Override
-		public void requestSmsCode(SendMessage sendMessage, String retailer, String phone)
+		public boolean requestSmsCode(SendMessage sendMessage, String retailer, String phone)
 		{
 				String url = String.format("%s/buyers/requestSMSCodeNewLogic?retailer=%s&phone=%s&phoneNew=%s&requestType=Restore", botConfig.getBaseUrl(), retailer, phone, phone);
 				try
 				{
 						apacheHttp.sendGetRequest(url);
-						sendMessage.setText(String.format("Смс с кодом подтверждения отправлено на номер: %s", phone));
+						return true;
 				}
 				catch(IOException e)
 				{
 						log.error("Ошибка при запросе смс кода {}", e.getCause().getMessage());
-						sendMessage.setText("Ошибка при запросе смс кода");
+						return false;
+				}
+		}
+
+		@Override
+		public Buyer checkDisposableCode(SendMessage sendMessage, String retailer, String phone, String code) throws IOException
+		{
+				String url = String.format("%s/buyers/loginByPhoneNumber?retailer=%s&cardID="
+					+ "&device=&phone=%s&code=%s&newLogic=true", botConfig.getBaseUrl(), retailer, phone, code);
+				try
+				{
+						Gson gson = new Gson();
+						return gson.fromJson(apacheHttp.sendGetRequest(url), Buyer.class);
+				}
+				catch(IOException e)
+				{
+						log.error("Ошибка при запросе смс кода {}", e.getCause().getMessage());
+						return null;
 				}
 		}
 }

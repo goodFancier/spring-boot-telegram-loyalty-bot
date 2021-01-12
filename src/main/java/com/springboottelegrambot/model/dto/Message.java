@@ -16,7 +16,7 @@ public class Message
 
 		private Date date;
 
-		@Column(columnDefinition = "enum('InitLoginScreen', 'RequestSmsCode', 'Card', 'Profile', 'Summary', 'Offers')")
+		@Column(columnDefinition = "enum('InitLoginScreen', 'RequestSmsCode', 'Card', 'Profile', 'Summary', 'Offers', 'CheckDisposablePassword')")
 		@Enumerated(EnumType.STRING)
 		private CommandType commandType;
 
